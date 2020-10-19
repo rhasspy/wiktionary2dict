@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+this_dir="$( cd "$( dirname "$0" )" && pwd )"
+src_dir="$(realpath "${this_dir}/..")"
+
+: "${PYTHON=python3}"
+
+venv="${src_dir}/.venv"
+
+if [[ -d "${venv}" ]]; then
+    # Use virtual environment
+    source "${venv}/bin/activate"
+    PYTHON="${venv}/bin/python"
+fi
+
+export PYTHONPATH="${src_dir}:${PYTHONPATH}"
+"${PYTHON}" -m wiktionary2dict "$@"
