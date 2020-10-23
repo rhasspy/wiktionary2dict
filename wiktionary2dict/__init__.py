@@ -2,6 +2,7 @@
 import re
 import typing
 import unicodedata
+from collections import defaultdict
 
 import lxml.etree as ElementTree
 
@@ -64,7 +65,8 @@ def wiktionary2dict(
 # U.S. English
 # -----------------------------------------------------------------------------
 
-_EN_US_PRON_PATTERN = re.compile(r"{{a|US}}\s+{{IPA\|en\|/?([^/}]+)")
+_EN_PRON_PATTERN = re.compile(r"\*\s+{{IPA\|en\|([^}]+)}}")
+_EN_REGION_PRON_PATTERN = re.compile(r".+{{a\|([^}]+)}}\s+{{IPA\|en\|([^}]+)}}")
 
 
 def process_en_us(text: str) -> typing.Iterable[str]:
@@ -73,6 +75,8 @@ def process_en_us(text: str) -> typing.Iterable[str]:
     in_english = False
     in_pron = False
     done_with_text = False
+
+    current_prons: typing.Dict[str, typing.List[str]] = defaultdict(list)
 
     for line in text.splitlines():
         if done_with_text:
@@ -84,16 +88,57 @@ def process_en_us(text: str) -> typing.Iterable[str]:
             if line.startswith("==="):
                 # New section
                 done_with_text = True
+
+                if current_prons:
+                    us_prons = None
+                    ga_prons = None
+                    uk_prons = None
+                    rp_prons = None
+
+                    for region, prons in current_prons.items():
+                        if "US" in region:
+                            us_prons = prons
+                        elif "UK" in region:
+                            uk_prons = prons
+                        elif ("GA" in region) or ("GenAm" in region):
+                            ga_prons = prons
+                        elif "RP" in region:
+                            rp_prons = prons
+
+                    best_prons = us_prons or ga_prons or uk_prons or rp_prons or []
+                    for best_pron in best_prons:
+                        yield best_pron
+
+                    current_prons.clear()
+
                 break
 
-            for ipa_pron in _EN_US_PRON_PATTERN.findall(line):
-                if "xxx" in ipa_pron:
-                    continue
+            pron_found = False
 
-                ipa_pron = _refine_pron(ipa_pron)
+            # Look for an "IPA" pronunciation first
+            for ipa_prons in _EN_PRON_PATTERN.findall(line):
+                for ipa_pron in ipa_prons.split("|"):
+                    if "xxx" in ipa_pron:
+                        continue
 
-                if ipa_pron:
-                    yield ipa_pron
+                    ipa_pron = _refine_pron(ipa_pron)
+
+                    if ipa_pron:
+                        yield ipa_pron
+                        pron_found = True
+
+            if not pron_found:
+                # Try to find a region-specific pronunciation
+                for region, ipa_prons in _EN_REGION_PRON_PATTERN.findall(line):
+                    for ipa_pron in ipa_prons.split("|"):
+                        if "xxx" in ipa_pron:
+                            continue
+
+                        ipa_pron = _refine_pron(ipa_pron)
+
+                        if ipa_pron:
+                            current_prons[region].append(ipa_pron)
+
         elif in_english and (line == "===Pronunciation==="):
             in_pron = True
         elif line == "==English==":

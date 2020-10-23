@@ -47,11 +47,16 @@ def main():
     process_func = _LANG_PROCESS.get(args.language)
     assert process_func, f"No wiktionary processor for code {args.language}"
 
-    if os.isatty(sys.stdin.fileno()):
-        print("Reading XML from stdin...", file=sys.stderr)
+    if args.input:
+        input_file = open(args.input, "rb")
+    else:
+        input_file = sys.stdin.buffer
+
+        if os.isatty(sys.stdin.fileno()):
+            print("Reading XML from stdin...", file=sys.stderr)
 
     # Process XML and write lexicon to stdout
-    pron_generator = wiktionary2dict(sys.stdin.buffer, process_func)
+    pron_generator = wiktionary2dict(input_file, process_func)
     for word, word_pron in pron_generator:
         if casing:
             word = casing(word)
@@ -71,6 +76,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument(
         "language", choices=sorted(_LANG_PROCESS.keys()), help="Language code"
     )
+    parser.add_argument("--input", help="Input XML file (default: stdin)")
     parser.add_argument(
         "--casing",
         choices=["lower", "upper", "ignore"],
