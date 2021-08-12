@@ -27,6 +27,22 @@ Each language's wiktionary is slightly different, so custom processing functions
     * Italian
 * `nl-nl` (`nlwiktionary`)
     * Dutch
+    
+## Installation
+
+The use of a virtual environment is recommended for installation. The `create-venv.sh` script in the `scripts/` directory will handle most of the details for you:
+
+```sh
+$ git clone https://github.com/rhasspy/wiktionary2dict
+$ cd wiktionary2dict
+$ scripts/create-venv.sh
+```
+
+Once installation is completed, you should be able to run:
+
+```sh
+$ bin/wiktionary2dict --help
+```
 
 ## Usage
 
@@ -75,33 +91,21 @@ abatsons ˌɑˌbɑˈsɔ̃
 abatsons ˌɑˌbɑˈsɔ̃z
 ```
 
-Using [gruut](https://github.com/rhasspy/gruut), you can phonemeize these pronunciations:
+## Adding a New Language
 
-```sh
-$ zcat en-us_lexicon.txt.gz | gruut en-us phonemize-lexicon | head -n 25
-0 oʊ
-101 w ʌ n oʊ w ʌ n
-2.0 t uː p ɔɪ n t oʊ
-6x6 s ɪ k s b ɑ ɪ s ɪ k s
-747 s ɛ v ə n f oʊ ɹ t i s ɛ v ə n
-aabomycin æ b oʊ m ɑ ɪ s ɪ n
-aachen ɑ k ə n
-aalborg ɔ l b ɔ ɹ
-aam ɑ m
-aandblom ɑ n t b l ɑ m
-aardvark ɑ ɹ d v ɑ ɹ k
-aasvoel ɑ s f oʊ ə l
-ababda ə b æ b d ə
-ababdeh ə b æ b d ɛ
-abacisci æ b ə s ɪ s ɑ ɪ
-abacost æ b ə k ɑ s t
-abakan ɑ b ə k ɑ n
-abarognosis æ b ə ɹ ə ɡ n oʊ s ɪ s
-abarthroses æ b ɑ ɹ θ ɹ oʊ s i z
-abatises æ b ə t ə s ə z
-abatjour ɑ b ɑ ʒ ʊ ɝ
-abat-voix ɑ b ɑ v w ɑ
-abat-voix ɑ b ɑ v w ɑ z
-abatvoix ɑ b ɑ v w ɑ
-abbacy æ b ə s i
+To add support for a new language, you must:
+
+1. Create a `process_<LANG>` function in `__init__.py`
+2. Add an entry to `__LANG_PROCESS` in `__main__.py`
+
+Your `process_<LANG>` function should have the following form:
+
+```python
+def process_my_lang(text: str) -> typing.Iterable[str]:
+    # Process content of <revision><text>...</text></revision>
+    # yield IPA pronunciations
 ```
+
+Because each language's Wiktionary is slightly different, you will need to inspect the XML yourself and determine the best way to extract pronunciations. Look at the existing `process_` functions for ideas of how to start.
+
+Most of the `<text>` sections that you need to process contain MediaWiki markup. The desired IPA pronunciation is typically under a specific section/heading, and often begins with "IPA". Be careful to handle cases where multiple pronunciations from different regions (or even different languages) are all mixed together!
