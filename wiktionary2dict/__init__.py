@@ -65,7 +65,7 @@ def wiktionary2dict(
 # U.S. English
 # -----------------------------------------------------------------------------
 
-_EN_PRON_PATTERN = re.compile(r"\*\s+{{IPA\|en\|([^}]+)}}")
+_EN_PRON_PATTERN = re.compile(r".+{{IPA\|en\|([^}]+)}}")
 _EN_REGION_PRON_PATTERN = re.compile(r".+{{a\|([^}]+)}}\s+{{IPA\|en\|([^}]+)}}")
 
 
