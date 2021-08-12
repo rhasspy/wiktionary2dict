@@ -7,6 +7,7 @@ import sys
 
 from . import (
     process_cs,
+    process_el,
     process_en_us,
     process_fr,
     process_it,
@@ -22,6 +23,7 @@ _LANG_PROCESS = {
     "cs-cz": process_cs,
     "it-it": process_it,
     "fr-fr": process_fr,
+    "el": process_el,
 }
 
 # -----------------------------------------------------------------------------

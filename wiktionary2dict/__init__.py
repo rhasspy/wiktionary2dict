@@ -298,6 +298,44 @@ def process_fr(text: str) -> typing.Iterable[str]:
 
 
 # -----------------------------------------------------------------------------
+# Greek
+# -----------------------------------------------------------------------------
+
+_EL_PRON_PATTERN = re.compile(r"ΔΦΑ.+\|([^}]+)")
+
+
+def process_el(text: str) -> typing.Iterable[str]:
+    """Process Greek pronunciations"""
+    # Look for IPA pronunciations in -el- > προφορά (pronunciation) section.
+    in_greek = False
+    in_pron = False
+    done_with_text = False
+
+    for line in text.splitlines():
+        if done_with_text:
+            break
+
+        line = line.strip()
+
+        if in_greek and in_pron:
+            if line.startswith("="):
+                # New section
+                done_with_text = True
+                break
+
+            for ipa_pron in _EL_PRON_PATTERN.findall(line):
+                ipa_pron = ipa_pron.lower()
+                ipa_pron = _refine_pron(ipa_pron)
+
+                if ipa_pron:
+                    yield ipa_pron
+        elif in_greek and (line == "==={{προφορά}}==="):
+            in_pron = True
+        elif line == "=={{-el-}}==":
+            in_greek = True
+
+
+# -----------------------------------------------------------------------------
 
 # Taken from https://github.com/Kyubyong/pron_dictionaries
 def _refine_pron(pron):
